@@ -1,25 +1,37 @@
-import { useRouter } from 'expo-router'
-import { useState } from 'react'
+import { useRouter } from "expo-router";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { useState } from "react";
 import {
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    View
-} from 'react-native'
+    View,
+} from "react-native";
+import { auth } from "../../../firebase";
 
 const LoginScreen = () => {
-  const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    router.replace('/(shop-owner)/dashboard')
-  }
+  const handleLogin = async () => {
+    try {
+      if (!email || !password) {
+        ToastAndroid.show("Please fill the fields", ToastAndroid.SHORT);
+        return;
+      }
+      await signInWithEmailAndPassword(auth, email, password);
+      router.replace("/(shop-owner)/dashboard");
+      console.log("Logged in success");
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleCreateAccount = () => {
-    router.push('/(auth)/signup')
-  }
+    router.push("/(auth)/signup");
+  };
 
   return (
     <View style={styles.container}>
@@ -52,14 +64,11 @@ const LoginScreen = () => {
           />
         </View>
 
-        <TouchableOpacity 
-          style={styles.loginButton}
-          onPress={handleLogin}
-        >
+        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
           <Text style={styles.loginButtonText}>Login</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.createAccountButton}
           onPress={handleCreateAccount}
         >
@@ -67,28 +76,28 @@ const LoginScreen = () => {
         </TouchableOpacity>
       </View>
     </View>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     paddingHorizontal: 20,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   header: {
     marginBottom: 30,
   },
   title: {
     fontSize: 28,
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: "600",
+    color: "#000",
     marginBottom: 8,
   },
   accountType: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
   formContainer: {
     gap: 16,
@@ -98,38 +107,38 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     paddingLeft: 4,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     padding: 14,
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   loginButton: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderWidth: 2,
-    borderColor: '#000',
+    borderColor: "#000",
     padding: 16,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 8,
   },
   loginButtonText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: "600",
+    color: "#000",
   },
   createAccountButton: {
-    alignItems: 'center',
+    alignItems: "center",
     padding: 12,
   },
   createAccountText: {
     fontSize: 14,
-    color: '#000',
-    textDecorationLine: 'underline',
+    color: "#000",
+    textDecorationLine: "underline",
   },
-})
+});
 
-export default LoginScreen
+export default LoginScreen;

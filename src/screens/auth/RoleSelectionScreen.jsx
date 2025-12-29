@@ -6,11 +6,11 @@ const RoleSelectionScreen = () => {
     const router = useRouter();
 
   const handleShopOwnerPress = () => {
-    router.push('/(auth)/login')
+    router.replace('/(auth)/login')
   }
 
   const handleCustomerPress = () => {
-    router.push('/(auth)/login')
+    router.replace('/(auth)/login')
   }
 
   return (

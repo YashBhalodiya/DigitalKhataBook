@@ -1,8 +1,17 @@
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { useRouter } from 'expo-router';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const Dashboard = () => {
+
+    const router = useRouter();
+
+    const addCustomer = () => {
+        router.replace('/(shop-owner)/AddCustomerModal')
+    }
+
   return (
-    <ScrollView style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Shop Owner Dashboard</Text>
       
       <View style={styles.statsContainer}>
@@ -21,7 +30,7 @@ const Dashboard = () => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Quick Actions</Text>
         
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity style={styles.actionButton} onPress={addCustomer}>
           <Text style={styles.actionButtonText}>Add Customer</Text>
         </TouchableOpacity>
 
@@ -44,7 +53,7 @@ const Dashboard = () => {
           <Text style={styles.viewButtonText}>All Transactions</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+    </SafeAreaView>
   )
 }
 
