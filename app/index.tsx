@@ -1,7 +1,7 @@
-import RoleSelectionScreen from '../src/screens/auth/RoleSelectionScreen';
+import { Redirect } from "expo-router";
 
 export default function Index() {
   return (
-    <RoleSelectionScreen />
+    <Redirect href="/(auth)/role-selection" />
   );
 }
