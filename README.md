@@ -49,8 +49,3 @@ The app allows tracking of credit transactions, payments, and outstanding balanc
 - Customer-wise transaction storage and balance calculation
 
 ---
-
-
-
-## 📂 Project Structure (High Level)
-
