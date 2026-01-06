@@ -1,23 +1,56 @@
-KhataBook - Digital Credit Management System
+# KhataBook – Digital Credit Management System
 
-A React Native mobile application built with Expo for managing customer
-credit/khata records. This app helps shop owners track customer transactions and outstanding balances digitally.
+A cross-platform mobile application built using **React Native (Expo)** that helps small shop owners manage customer credit (khata) records digitally.  
+The app allows tracking of credit transactions, payments, and outstanding balances for both shop owners and customers.
 
-- Features
-For Shop Owners
-- Dashboard: View total outstanding amounts and customer count
-- Customer Management: Add, view, and manage customer profiles
-- Credit Entry: Record credit transactions with customers
-- Profile Management: View and manage shop owner profile
+---
 
-For Customers
-- Dashboard: View outstanding balance and transaction history
-- Transaction History: Track all credit and payment records
+## Features
 
-Framework: Expo
-Navigation: Expo Router (v6)
-Backend: Firebase (v12.7.0)
-- Authentication
-- Firestore Database
-State Management: React Context API
+### Shop Owner
+- **Dashboard**
+  - View total outstanding credit amount
+  - View total number of customers
+- **Customer Management**
+  - Add new customers
+  - View and manage customer profiles
+- **Credit Entry**
+  - Record credit and payment transactions
+  - Automatically update outstanding balances
+- **Profile Management**
+  - View and manage shop owner profile details
+
+---
+
+### Customer
+- **Dashboard**
+  - View total outstanding balance
+- **Transaction History**
+  - View complete credit and payment history
+
+---
+
+## Tech Stack
+
+- **Framework:** React Native (Expo)
+- **Navigation:** Expo Router (v6)
+- **Backend:** Firebase (v12.7.0)
+  - Firebase Authentication
+  - Firestore Cloud Database
+- **State Management:** React Context API
+
+---
+
+## Authentication & Data Management
+
+- Role-based authentication for shop owners and customers
+- Secure user login using Firebase Authentication
+- Real-time data storage and retrieval using Firestore
+- Customer-wise transaction storage and balance calculation
+
+---
+
+
+
+## 📂 Project Structure (High Level)
 
