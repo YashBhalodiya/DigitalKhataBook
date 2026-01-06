@@ -41,7 +41,7 @@ export const AuthService={
 
     signout: async () => {
         try {
-            await signOut();
+            await signOut(auth);
         } catch (error) {
             throw new Error(error.message)
         }
