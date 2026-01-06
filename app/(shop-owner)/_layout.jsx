@@ -13,6 +13,12 @@ export default function ShopOwnerLayout() {
             animation: "slide_from_bottom"
           }} 
         />
+        <Stack.Screen 
+          name="list-all-customers" 
+          options={{ 
+            headerShown: false,
+          }} 
+        />
       </Stack>
     </>
   );
