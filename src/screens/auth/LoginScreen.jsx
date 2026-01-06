@@ -1,19 +1,22 @@
 import { useRouter } from "expo-router";
-import { signInWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";
 import {
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  StyleSheet,
+  Text,
+  TextInput,
+  ToastAndroid,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { auth } from "../../../firebase";
+import { useAuth } from '../../context/AuthContext';
 
 const LoginScreen = () => {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const {signInWithEmail} = useAuth();
 
   const handleLogin = async () => {
     try {
@@ -21,11 +24,17 @@ const LoginScreen = () => {
         ToastAndroid.show("Please fill the fields", ToastAndroid.SHORT);
         return;
       }
-      await signInWithEmailAndPassword(auth, email, password);
+      setLoading(true);
+
+      await signInWithEmail(email, password);
+
       router.replace("/(shop-owner)/dashboard");
+
       console.log("Logged in success");
     } catch (error) {
       console.log(error);
+    } finally{
+      setLoading(false);
     }
   };
 
