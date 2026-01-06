@@ -1,50 +1,23 @@
-# Welcome to your Expo app 👋
+KhataBook - Digital Credit Management System
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native mobile application built with Expo for managing customer
+credit/khata records. This app helps shop owners track customer transactions and outstanding balances digitally.
 
-## Get started
+- Features
+For Shop Owners
+- Dashboard: View total outstanding amounts and customer count
+- Customer Management: Add, view, and manage customer profiles
+- Credit Entry: Record credit transactions with customers
+- Profile Management: View and manage shop owner profile
 
-1. Install dependencies
+For Customers
+- Dashboard: View outstanding balance and transaction history
+- Transaction History: Track all credit and payment records
 
-   ```bash
-   npm install
-   ```
+Framework: Expo
+Navigation: Expo Router (v6)
+Backend: Firebase (v12.7.0)
+- Authentication
+- Firestore Database
+State Management: React Context API
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
