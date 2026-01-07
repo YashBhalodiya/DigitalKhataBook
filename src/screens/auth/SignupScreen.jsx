@@ -4,13 +4,17 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { useState } from "react";
 import {
-    StyleSheet,
-    Text,
-    TextInput,
-    ToastAndroid,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  ToastAndroid,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, db } from "../../../firebase";
 
 const SignupScreen = () => {
@@ -34,7 +38,7 @@ const SignupScreen = () => {
         return;
       }
 
-      if(mobile.length !== 10 ){
+      if (mobile.length !== 10) {
         ToastAndroid.show("Invalid mobile number", ToastAndroid.SHORT);
         return;
       }
@@ -68,95 +72,112 @@ const SignupScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Create Account</Text>
-        <Text style={styles.subtitle}>Sign up to get started</Text>
-      </View>
-
-      <View style={styles.formContainer}>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Full Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your name"
-            value={name}
-            onChangeText={setName}
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Mobile Number</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter mobile number"
-            value={mobile}
-            onChangeText={setMobile}
-            keyboardType="phone-pad"
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Select Role</Text>
-
-          <View style={styles.pickerWrapper}>
-            <Picker
-              selectedValue={role}
-              onValueChange={(itemValue) => setRole(itemValue)}
-              style={styles.picker}
-            >
-              <Picker.Item label="Customer" value="customer" />
-              <Picker.Item label="Shop Owner" value="shop-owner" />
-            </Picker>
-          </View>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Create password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Confirm Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Confirm password"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-          />
-        </View>
-
-        <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
-          <Text style={styles.signupButtonText}>Create Account</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.loginButton}
-          onPress={handleBackToLogin}
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        keyboardVerticalOffset={Platform.OS === "android" ? 0 : 20}
+        behavior={Platform.OS === "android" ? "padding" : "height"}
+      >
+        <ScrollView
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.loginText}>Already have an account? Login</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+          <View style={styles.header}>
+            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.subtitle}>Sign up to get started</Text>
+          </View>
+
+          <View style={styles.formContainer}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Full Name</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your name"
+                value={name}
+                onChangeText={setName}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Mobile Number</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter mobile number"
+                value={mobile}
+                onChangeText={setMobile}
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Select Role</Text>
+
+              <View style={styles.pickerWrapper}>
+                <Picker
+                  selectedValue={role}
+                  onValueChange={(itemValue) => setRole(itemValue)}
+                  style={styles.picker}
+                >
+                  <Picker.Item label="Customer" value="customer" />
+                  <Picker.Item label="Shop Owner" value="shop-owner" />
+                </Picker>
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Create password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Confirm Password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Confirm password"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.signupButton}
+              onPress={handleSignup}
+            >
+              <Text style={styles.signupButtonText}>Create Account</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={handleBackToLogin}
+            >
+              <Text style={styles.loginText}>
+                Already have an account? Login
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -165,13 +186,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     paddingHorizontal: 20,
-    paddingTop: 40,
+    paddingTop: 35,
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   header: {
     marginBottom: 30,
   },
   title: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: "600",
     color: "#000",
     marginBottom: 8,
@@ -182,33 +209,39 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     gap: 16,
+    paddingRight: 1
   },
   inputGroup: {
     gap: 8,
   },
   label: {
-    fontSize: 14,
-    color: "#666",
+    fontSize: 16,
+    color: "#000000ff",
     paddingLeft: 4,
   },
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
+    borderRadius: 14,
     padding: 14,
     fontSize: 16,
     backgroundColor: "#fff",
   },
   pickerWrapper: {
     borderWidth: 1,
+    borderRadius: 14,
     borderColor: "#ccc",
+    paddingHorizontal: 6
   },
   picker: {
-    height: 50,
+    height: 53,
+    color: '#575757ff'
   },
   signupButton: {
-    backgroundColor: "#fff",
-    borderWidth: 2,
-    borderColor: "#000",
+    backgroundColor: "#059669",
+    // borderWidth: 2,
+    // borderColor: "#000",
+    borderRadius: 14,
     padding: 16,
     alignItems: "center",
     marginTop: 8,
@@ -216,7 +249,7 @@ const styles = StyleSheet.create({
   signupButtonText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#000",
+    color: "#ffffffff",
   },
   loginButton: {
     alignItems: "center",
@@ -225,7 +258,7 @@ const styles = StyleSheet.create({
   loginText: {
     fontSize: 14,
     color: "#000",
-    textDecorationLine: "underline",
+    // textDecorationLine: "underline",
   },
 });
 

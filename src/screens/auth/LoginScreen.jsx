@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from '../../context/AuthContext';
 
 const LoginScreen = () => {
@@ -38,23 +39,27 @@ const LoginScreen = () => {
     }
   };
 
+  const forgotPassword = () => {
+    console.log("Password forgot");
+  }
+
   const handleCreateAccount = () => {
     router.push("/(auth)/signup");
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Login</Text>
-        <Text style={styles.accountType}>Customer Account</Text>
+        <Text style={styles.title}>Welcome Back</Text>
+        <Text style={styles.subTitle}>Please Login</Text>
       </View>
 
       <View style={styles.formContainer}>
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Mobile / Email</Text>
+          <Text style={styles.label}>Email</Text>
           <TextInput
             style={styles.input}
-            placeholder="Mobile / Email"
+            placeholder="Enter your email"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -73,6 +78,10 @@ const LoginScreen = () => {
           />
         </View>
 
+        <TouchableOpacity style={styles.forgotPassButton} onPress={forgotPassword}>
+          <Text style={styles.forgotPassButtonText}>Forgot Passoword?</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
           <Text style={styles.loginButtonText}>Login</Text>
         </TouchableOpacity>
@@ -81,10 +90,10 @@ const LoginScreen = () => {
           style={styles.createAccountButton}
           onPress={handleCreateAccount}
         >
-          <Text style={styles.createAccountText}>Create new account</Text>
+          <Text style={styles.createAccountText}>Don't have an account? Click here</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -93,20 +102,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     paddingHorizontal: 20,
-    justifyContent: "center",
+    justifyContent: "flex-start",
   },
   header: {
     marginBottom: 30,
+    marginTop: 50
   },
   title: {
-    fontSize: 28,
+    fontSize: 35,
     fontWeight: "600",
     color: "#000",
     marginBottom: 8,
   },
-  accountType: {
-    fontSize: 16,
-    color: "#666",
+  subTitle: {
+    fontSize: 18,
+    color: "#686868ff",
   },
   formContainer: {
     gap: 16,
@@ -115,21 +125,33 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   label: {
-    fontSize: 14,
-    color: "#666",
+    fontSize: 16,
+    color: "#000000ff",
     paddingLeft: 4,
   },
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
+    borderRadius: 14,
     padding: 14,
     fontSize: 16,
     backgroundColor: "#fff",
   },
+  forgotPassButton:{
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginVertical: 12
+  },
+  forgotPassButtonText: {
+    color: '#1eaa25ff',
+    fontSize: 15,
+    fontWeight: '500'
+  },
   loginButton: {
-    backgroundColor: "#fff",
-    borderWidth: 2,
-    borderColor: "#000",
+    backgroundColor: "#059669",
+    // borderWidth: 2,
+    // borderColor: "#000",
+    borderRadius: 14,
     padding: 16,
     alignItems: "center",
     marginTop: 8,
@@ -137,7 +159,7 @@ const styles = StyleSheet.create({
   loginButtonText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#000",
+    color: "#ffffffff",
   },
   createAccountButton: {
     alignItems: "center",
@@ -146,7 +168,7 @@ const styles = StyleSheet.create({
   createAccountText: {
     fontSize: 14,
     color: "#000",
-    textDecorationLine: "underline",
+    // textDecorationLine: "underline",
   },
 });
 
