@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -9,15 +10,15 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from '../../src/context/AuthContext';
+import { useAuth } from "../../src/context/AuthContext";
 
 const LoginScreen = () => {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const {signInWithEmail} = useAuth();
+  const [visible, setVisible] = useState(false);
+  const { signInWithEmail } = useAuth();
 
   const handleLogin = async () => {
     try {
@@ -26,22 +27,18 @@ const LoginScreen = () => {
         return;
       }
       setLoading(true);
-
       await signInWithEmail(email, password);
-
-      router.replace("/(shop-owner)/Dashboard");
-
       console.log("Logged in success");
     } catch (error) {
       console.log(error);
-    } finally{
+    } finally {
       setLoading(false);
     }
   };
 
   const forgotPassword = () => {
     console.log("Password forgot");
-  }
+  };
 
   const handleCreateAccount = () => {
     router.push("/(auth)/SignupScreen");
@@ -69,16 +66,31 @@ const LoginScreen = () => {
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!visible}
+            />
+            <TouchableOpacity
+              style={styles.eyeIcon}
+              onPress={() => setVisible(!visible)}
+            >
+              <Ionicons
+                name={visible ? "eye-off" : "eye"}
+                size={24}
+                color="#059669"
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <TouchableOpacity style={styles.forgotPassButton} onPress={forgotPassword}>
+        <TouchableOpacity
+          style={styles.forgotPassButton}
+          onPress={forgotPassword}
+        >
           <Text style={styles.forgotPassButtonText}>Forgot Passoword?</Text>
         </TouchableOpacity>
 
@@ -90,7 +102,9 @@ const LoginScreen = () => {
           style={styles.createAccountButton}
           onPress={handleCreateAccount}
         >
-          <Text style={styles.createAccountText}>Don't have an account? Click here</Text>
+          <Text style={styles.createAccountText}>
+            Don't have an account? Click here
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -106,7 +120,7 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 30,
-    marginTop: 50
+    marginTop: 50,
   },
   title: {
     fontSize: 35,
@@ -137,15 +151,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#fff",
   },
-  forgotPassButton:{
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginVertical: 12
+  passwordContainer: {
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 14,
+    padding: 4,
+  },
+  forgotPassButton: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginVertical: 12,
   },
   forgotPassButtonText: {
-    color: '#1eaa25ff',
+    color: "#1eaa25ff",
     fontSize: 15,
-    fontWeight: '500'
+    fontWeight: "500",
   },
   loginButton: {
     backgroundColor: "#059669",

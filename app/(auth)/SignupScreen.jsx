@@ -1,182 +1,236 @@
-import { Picker } from "@react-native-picker/picker";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
 import { useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   ToastAndroid,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { auth, db } from "../../firebase";
+import { useAuth } from "../../src/context/AuthContext";
 
 const SignupScreen = () => {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [mobile, setMobile] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState("Customer");
+  const { signUpShopOwner, signUpCustomer } = useAuth();
+  const [role, setRole] = useState("shop-owner");
+  const [loading, setLoading] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+    shopName: "",
+  });
 
   const handleSignup = async () => {
     try {
-      if (!name || !email || !mobile || !password || !confirmPassword) {
+      if (
+        !formData.name ||
+        !formData.email ||
+        !formData.phone ||
+        !formData.password ||
+        !formData.confirmPassword
+      ) {
         ToastAndroid.show("Fill the fields", ToastAndroid.SHORT);
         return;
       }
 
-      if (password !== confirmPassword) {
+      if (formData.password !== formData.confirmPassword) {
         ToastAndroid.show("Passwords don't match", ToastAndroid.SHORT);
         return;
       }
 
-      if (mobile.length !== 10) {
+      if (formData.phone.length !== 10) {
         ToastAndroid.show("Invalid mobile number", ToastAndroid.SHORT);
         return;
       }
 
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      if (role === "shop-owner" && !formData.shopName) {
+        ToastAndroid.show("Shop name is req", ToastAndroid.SHORT);
+        return;
+      }
+      setLoading(true);
 
-      const user = userCredential.user;
-      console.log("User Created:", user.uid);
-
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        name: name,
-        email: email,
-        mobile: mobile,
-        role: role,
-        createdAt: new Date().toISOString(),
-      });
-      ToastAndroid.show("Account created successfully!", ToastAndroid.SHORT);
-      router.replace("/(auth)/LoginScreen");
+      if (role === "shop-owner") {
+        await signUpShopOwner(formData);
+        ToastAndroid.show("Shop created successfully!", ToastAndroid.SHORT);
+        router.replace("/(shop-owner)/Dashboard");
+      } else {
+        const result = await signUpCustomer(formData);
+        if (result.customerId) {
+          ToastAndroid.show("Account linked successfully!", ToastAndroid.SHORT);
+        } else {
+          ToastAndroid.show(
+            "Account created! Contact shop owner to link.",
+            ToastAndroid.LONG
+          );
+        }
+        router.replace("/(customer)/CustomerDashboard");
+      }
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleBackToLogin = () => {
-    router.back();
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        keyboardVerticalOffset={Platform.OS === "android" ? 0 : 20}
-        behavior={Platform.OS === "android" ? "padding" : "height"}
-      >
-        <ScrollView
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.header}>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Sign up to get started</Text>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subTitle}>Sign up to get started</Text>
+        </View>
+
+        <View style={styles.roleContainer}>
+          <TouchableOpacity
+            style={[
+              styles.roleButton,
+              role === "shop-owner" && styles.roleButtonActive,
+            ]}
+            onPress={() => setRole("shop-owner")}
+          >
+            <Text
+              style={[
+                styles.roleText,
+                role === "shop-owner" && styles.roleTextActive,
+              ]}
+            >
+              Shop Owner
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.roleButton,
+              role === "customer" && styles.roleButtonActive,
+            ]}
+            onPress={() => setRole("customer")}
+          >
+            <Text
+              style={[
+                styles.roleText,
+                role === "customer" && styles.roleTextActive,
+              ]}
+            >
+              Customer
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.formContainer}>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Name *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your name"
+              value={formData.name}
+              onChangeText={(text) => setFormData({ ...formData, name: text })}
+            />
           </View>
 
-          <View style={styles.formContainer}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Full Name</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your name"
-                value={name}
-                onChangeText={setName}
-              />
-            </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Phone Number *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter phone number"
+              value={formData.phone}
+              onChangeText={(text) => setFormData({ ...formData, phone: text })}
+              keyboardType="phone-pad"
+              maxLength={10}
+            />
+          </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Mobile Number</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter mobile number"
-                value={mobile}
-                onChangeText={setMobile}
-                keyboardType="phone-pad"
-              />
-            </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Email *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your email"
+              value={formData.email}
+              onChangeText={(text) => setFormData({ ...formData, email: text })}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Select Role</Text>
-
-              <View style={styles.pickerWrapper}>
-                <Picker
-                  selectedValue={role}
-                  onValueChange={(itemValue) => setRole(itemValue)}
-                  style={styles.picker}
-                >
-                  <Picker.Item label="Customer" value="customer" />
-                  <Picker.Item label="Shop Owner" value="shop-owner" />
-                </Picker>
+          {role === "shop-owner" && (
+            <>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Shop Name *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter shop name"
+                  value={formData.shopName}
+                  onChangeText={(text) =>
+                    setFormData({ ...formData, shopName: text })
+                  }
+                />
               </View>
-            </View>
+            </>
+          )}
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email</Text>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Password *</Text>
+            <View style={styles.passwordContainer}>
               <TextInput
-                style={styles.input}
-                placeholder="Enter your email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
+                style={styles.passwordInput}
+                placeholder="Enter password"
+                value={formData.password}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, password: text })
+                }
+                secureTextEntry={!visible}
               />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setVisible(!visible)}
+              >
+                <Ionicons
+                  name={visible ? "eye-off" : "eye"}
+                  size={24}
+                  color="#686868"
+                />
+              </TouchableOpacity>
             </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Create password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Confirm Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Confirm password"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-              />
-            </View>
-
-            <TouchableOpacity
-              style={styles.signupButton}
-              onPress={handleSignup}
-            >
-              <Text style={styles.signupButtonText}>Create Account</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.loginButton}
-              onPress={handleBackToLogin}
-            >
-              <Text style={styles.loginText}>
-                Already have an account? Login
-              </Text>
-            </TouchableOpacity>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Confirm Password *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Confirm password"
+              value={formData.confirmPassword}
+              onChangeText={(text) =>
+                setFormData({ ...formData, confirmPassword: text })
+              }
+              secureTextEntry={!visible}
+            />
+          </View>
+
+          <TouchableOpacity
+            style={styles.signupButton}
+            onPress={handleSignup}
+            disabled={loading}
+          >
+            <Text style={styles.signupButtonText}>
+              {loading ? "Creating Account..." : "Sign Up"}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={() => router.push("/(auth)/LoginScreen")}
+          >
+            <Text style={styles.loginText}>Already have an account? Login</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -186,16 +240,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     paddingHorizontal: 20,
-    paddingTop: 35,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
   },
   header: {
     marginBottom: 30,
+    marginTop: 30,
   },
   title: {
     fontSize: 30,
@@ -207,9 +255,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
   },
+  roleContainer: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 20,
+  },
+  roleButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    alignItems: "center",
+  },
+  roleButtonActive: {
+    backgroundColor: "#059669",
+    borderColor: "#059669",
+  },
+  roleText: {
+    fontSize: 16,
+    color: "#666",
+  },
+  roleTextActive: {
+    color: "#fff",
+    fontWeight: "600",
+  },
   formContainer: {
     gap: 16,
-    paddingRight: 1
+    paddingRight: 1,
   },
   inputGroup: {
     gap: 8,
@@ -227,15 +300,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#fff",
   },
-  pickerWrapper: {
-    borderWidth: 1,
-    borderRadius: 14,
-    borderColor: "#ccc",
-    paddingHorizontal: 6
+  passwordContainer: {
+    position: 'relative',
+    justifyContent: 'center',
   },
-  picker: {
-    height: 53,
-    color: '#575757ff'
+  passwordInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 14,
+    padding: 14,
+    paddingRight: 50,
+    fontSize: 16,
+    backgroundColor: "#fff",
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 14,
+    padding: 4,
   },
   signupButton: {
     backgroundColor: "#059669",
