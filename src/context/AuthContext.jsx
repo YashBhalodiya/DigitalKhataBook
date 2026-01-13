@@ -1,8 +1,9 @@
-import { useRouter, useSegments } from "expo-router";
+import { useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import { createContext, useContext, useEffect, useState } from "react";
-import { auth } from "../../firebase";
-import { AuthService } from "../services/authService";
+import { auth, db } from "../../firebase";
+import { authService } from "../services/authService";
 
 export const AuthContext = createContext();
 
@@ -11,14 +12,25 @@ export const AuthProvider = ({ children }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const segments = useSegments();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
-        const profile = await AuthService.getUserProfile(firebaseUser.uid);
-        setUserProfile(profile);
+        try {
+          const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+          if (userDoc.exists()) {
+            const profile = { id: userDoc.id, ...userDoc.data() };
+            setUserProfile(profile);
+            if (profile.role === "shop-owner") {
+              router.replace("/(shop-owner)/Dashboard");
+            } else if (profile.role === "customer") {
+              router.replace("/(customer)/CustomerDashboard");
+            }
+          }
+        } catch (error) {
+          throw error;
+        }
       } else {
         setUser(null);
         setUserProfile(null);
@@ -28,44 +40,17 @@ export const AuthProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  useEffect(() => {
-    if(loading) return;
-    const inAuthGroup = segments[0] === '(auth)'
-    const inShopOwnerGroup = segments[0] === '(shop-owner)';
-    const inCustomerGroup = segments[0] === '(customer)';
+  const signUpShopOwner = async (userData) => {
+    return await authService.signUpShopOwner(userData);
+  };
 
-    console.log('Navigation - User:', user?.email, 'Role:', userProfile?.role, 'InAuth:', inAuthGroup, inShopOwnerGroup, inCustomerGroup); // Debug log
-
-    if(!user && !inAuthGroup){
-      router.replace('/(auth)/login')
-    }else if (user && userProfile && inAuthGroup) {
-      if (userProfile.role === 'shop-owner') {
-        router.replace('/(shop-owner)/(tabs)/dashboard')
-      }else if (userProfile.role === 'customer') {
-        router.replace('/(customer)/dashboard')
-      }
-    }else if(user && userProfile){
-      if(userProfile.role === 'shop-owner' && inCustomerGroup){
-        router.replace('/(shop-owner)/(tabs)/dashboard')
-      }else if (userProfile.role === 'customer' && inShopOwnerGroup) {
-        router.replace('/(customer)/dashboard')
-      }
-    }
-  },[user, userProfile, loading, segments])
+  const signUpCustomer = async (userData) => {
+    return await authService.signUpCustomer(userData);
+  };
 
   const signInWithEmail = async (email, password) => {
     try {
-      const result = await AuthService.login(email, password);
-      return result;
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const signUpWithEmail = async (email, password, userData) => {
-    try {
-      const result = await AuthService.signup(email, password, userData);
-      return result;
+      return await authService.signIn(email, password);
     } catch (error) {
       throw error;
     }
@@ -73,8 +58,7 @@ export const AuthProvider = ({ children }) => {
 
   const signOut = async () => {
     try {
-      await AuthService.signout();
-      router.replace('/(auth)/login')
+      await authService.singout();
     } catch (error) {
       throw error;
     }
@@ -85,7 +69,8 @@ export const AuthProvider = ({ children }) => {
     userProfile,
     loading,
     signInWithEmail,
-    signUpWithEmail,
+    signUpCustomer,
+    signUpShopOwner,
     signOut,
   };
 
