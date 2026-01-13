@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Spinner from "react-native-loading-spinner-overlay";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../src/context/AuthContext";
 
@@ -46,6 +47,13 @@ const LoginScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <Spinner 
+        visible={loading}
+        textContent={'Logging in...'}
+        textStyle={styles.spinnerTextStyle}
+        color="#059669"
+        overlayColor="rgba(0,0,0,0.5)"
+      />
       <View style={styles.header}>
         <Text style={styles.title}>Welcome Back</Text>
         <Text style={styles.subTitle}>Please Login</Text>
@@ -117,6 +125,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     paddingHorizontal: 20,
     justifyContent: "flex-start",
+  },
+  spinnerTextStyle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
   },
   header: {
     marginBottom: 30,
