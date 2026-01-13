@@ -4,19 +4,12 @@ export default function ShopOwnerLayout() {
   return (
     <>
       <Stack screenOptions={{headerShown: false}}>
-        {/* <Stack.Screen name="(tabs)" options={{ headerShown: false }} /> */}
 
         <Stack.Screen 
-          name="Dashboard" 
-          options={{ 
-            // headerShown: false,
-          }} 
+          name="Dashboard"  
         />
         <Stack.Screen 
           name="ProfileScreen" 
-          options={{ 
-            headerShown: false,
-          }} 
         />
         <Stack.Screen 
           name="AddCustomerModal" 
@@ -27,11 +20,12 @@ export default function ShopOwnerLayout() {
           }} 
         />
         <Stack.Screen 
-          name="ListAllCustomers" 
-          options={{ 
-            headerShown: false,
-          }} 
+          name="ListAllCustomers"  
         />
+        <Stack.Screen 
+          name="AddCreditEntry"  
+        />
+
       </Stack>
     </>
   );
