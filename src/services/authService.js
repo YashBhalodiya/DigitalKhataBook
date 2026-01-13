@@ -1,61 +1,74 @@
+import { auth, db } from "@/firebase";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { auth, db } from "../../firebase";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { shopService } from '../services/shopService';
 
-// export const signupWithEmail = async (email, password) => {
-//     await createUserWithEmailAndPassword(auth, email, password);
-// }
+export const authService = {
+  signUpShopOwner: async (userData) => {
+    try {
+        const {name, email, password, phone, shopName} = userData;
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const userId = userCredential.user.uid
+        
+        const shopId = await shopService.createShop(userId, {
+          shopName,
+          name,
+          phone
+        })
+        
+        await setDoc(doc(db, 'users', userId), {
+          name,
+          email,
+          phone,
+          role: 'shop-owner',
+          shopId,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        })
 
-// export const loginWithEmail = async (email, password) => {
-//     await signInWithEmailAndPassword(auth, email, password);
-// }
 
-export const AuthService={
-    signup: async (email, password, userData) => {
-        try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-
-            await setDoc(doc(db, "users", user.uid), {
-                uid: user.uid,
-                email: email, 
-                role: userData.role || "customer",
-                createdAt: new Date().toISOString(),
-                ...userData
-            })
-
-            return userCredential;
-        } catch (error) {
-            throw new Error(error.message);
-        }
-    },
-    
-    login: async (email, password) => {
-        try {
-            const userCredential = signInWithEmailAndPassword(auth, email, password);
-            return userCredential
-        } catch (error) {
-            throw new Error(error.message);
-        }
-    },
-
-    signout: async () => {
-        try {
-            await signOut(auth);
-        } catch (error) {
-            throw new Error(error.message)
-        }
-    },
-
-    getUserProfile: async (userId) => {
-        try {
-            const userDoc = await getDoc(doc(db, "users", userId));
-            if(userDoc.exists()){
-                return userDoc.data();
-            }
-            return null;
-        } catch (error) {
-            throw new Error(error.message)
-        }
+        return {userId, shopId}
+    } catch (error) {
+        throw error
     }
+  },
+  signUpCustomer: async (userData) => {
+    try {
+      const {name, email, password, phone} = userData;
+      const userCredential = await createUserWithEmailAndPassword(auth, email,password)
+      const userId = userCredential.user.uid
+
+      await setDoc(doc(db, 'users', userId), {
+        name,
+        email,
+        phone,
+        role: 'customer',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      })
+      return {userId}
+    } catch (error) {
+      throw error
+    }
+  },
+  signIn: async (email, password) => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      const userId = userCredential.user.uid
+
+      const userDoc = await getDoc(doc(db, 'users', userId))
+      if (userDoc.exists()) {
+        return {userId, ...userDoc.data()}
+      }
+    } catch (error) {
+      throw error
+    }
+  },
+  singout: async () => {
+    try {
+      await signOut(auth)
+    } catch (error) {
+      throw error
+    }
+  }
 }
