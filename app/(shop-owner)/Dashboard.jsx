@@ -1,30 +1,51 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../src/context/AuthContext";
 import { customerService } from "../../src/services/customerService";
 
 const Dashboard = () => {
   const router = useRouter();
-  const [customerCount, setCustomerCount] = useState(0);
-  const { user, userProfile } = useAuth();
+  const { userProfile } = useAuth();
+  const [shopData, setShopData] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    fetchCustomerCount();
-  }, []);
+  const [customerCount, setCustomerCount] = useState(0);
 
   const fetchCustomerCount = async () => {
+    if (!userProfile?.shopId) {
+      return;
+    }
     try {
-      setLoading(true);
-      const count = await customerService.getCustomerCount(user?.uid);
+      const count = await customerService.getCustomerCount(userProfile.shopId);
       setCustomerCount(count);
     } catch (error) {
       throw error;
     }
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchCustomerCount();
+    }, [fetchCustomerCount])
+  );
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#059669" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const addCustomer = () => {
     router.push("/(shop-owner)/AddCustomerModal");
@@ -35,7 +56,17 @@ const Dashboard = () => {
   };
 
   const addCreditEntry = () => {
-    router.replace("/(shop-owner)/add-credit-entry");
+    router.push("/(shop-owner)/AddCreditEntry");
+    console.log("Pressed");
+  };
+
+  const monthlySummary = () => {
+    router.push("/(shop-owner)/MonthlySummary");
+    console.log("Pressed");
+  };
+
+  const allTransaction = () => {
+    router.push("/(shop-owner)/AllTransaction");
     console.log("Pressed");
   };
 
@@ -59,7 +90,7 @@ const Dashboard = () => {
           <Text style={[styles.statLabel, styles.whiteText]}>
             Total Outstanding
           </Text>
-          <Text style={[styles.statValue, styles.whiteText]}>₹ XX,XXX</Text>
+          <Text style={[styles.statValue, styles.whiteText]}>₹ {shopData?.totalOutstanding || 0}</Text>
         </View>
 
         <View style={styles.statCard}>
@@ -70,32 +101,61 @@ const Dashboard = () => {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <View style={styles.actionButtonsContainer}>
+          <TouchableOpacity style={styles.actionCard} onPress={addCustomer}>
+            <View style={styles.iconContainer}>
+              <Ionicons name="person-add-outline" size={28} color="#05865dff" />
+            </View>
+            <Text style={styles.actionCardText}>Add Customer</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton} onPress={addCustomer}>
-          <Ionicons name="person-add-outline" size={24} color='#05865dff' style={{backgroundColor: '#eff8f5ff', padding: 5, borderRadius: 5}} />
-          <Text style={styles.actionButtonText}>Add Customer</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.actionCard} onPress={addCreditEntry}>
+            <View style={styles.iconContainer}>
+              <Ionicons name="add" size={28} color="#05865dff" />
+            </View>
+            <Text style={styles.actionCardText}>Add Credit Entry</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton} onPress={addCreditEntry}>
-          <Ionicons name="add" size={24} color='#05865dff' style={{backgroundColor: '#eff8f5ff', padding: 5, borderRadius: 5}} />
-          <Text style={styles.actionButtonText}>Add Credit Entry</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="stats-chart-outline" size={24} color='#05865dff' style={{backgroundColor: '#eff8f5ff', padding: 5, borderRadius: 5}} />
-          <Text style={styles.actionButtonText}>Monthly Summary</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.actionCard} onPress={monthlySummary}>
+            <View style={styles.iconContainer}>
+              <Ionicons
+                name="stats-chart-outline"
+                size={28}
+                color="#05865dff"
+              />
+            </View>
+            <Text style={styles.actionCardText}>Monthly Summary</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.viewSection}>
         <Text style={styles.sectionTitle}>Manage</Text>
         <TouchableOpacity style={styles.actionButton} onPress={viewAllCustomer}>
-          <Ionicons name="people-outline" size={24} color='#05865dff' style={{backgroundColor: '#eff8f5ff', padding: 5, borderRadius: 5}} />
+          <Ionicons
+            name="people-outline"
+            size={24}
+            color="#05865dff"
+            style={{
+              backgroundColor: "#eff8f5ff",
+              padding: 5,
+              borderRadius: 5,
+            }}
+          />
           <Text style={styles.actionButtonText}>View All Customers</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="clipboard-outline" size={24} color='#05865dff' style={{backgroundColor: '#eff8f5ff', padding: 5, borderRadius: 5}} />
+        <TouchableOpacity style={styles.actionButton} onPress={allTransaction}>
+          <Ionicons
+            name="clipboard-outline"
+            size={24}
+            color="#05865dff"
+            style={{
+              backgroundColor: "#eff8f5ff",
+              padding: 5,
+              borderRadius: 5,
+            }}
+          />
           <Text style={styles.actionButtonText}>All Transactions</Text>
         </TouchableOpacity>
       </View>
@@ -166,21 +226,52 @@ const styles = StyleSheet.create({
     color: "#000",
   },
   section: {
-    marginBottom: 8,
+    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "500",
     color: "#000",
     marginBottom: 12,
-    paddingBottom: 8,
+  },
+  actionButtonsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  actionCard: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 14,
+    borderColor: "#e0e0e0",
+    padding: 16,
+    alignItems: "center",
+    backgroundColor: "#fff",
+    minHeight: 100,
+    justifyContent: "center",
+  },
+  iconContainer: {
+    width: 50,
+    height: 50,
+    backgroundColor: "#eff8f5ff",
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  actionCardText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#000",
+    textAlign: "center",
+    marginTop: 4,
   },
   actionButton: {
     borderWidth: 1,
     borderRadius: 14,
-    borderColor: '#dbdbdbff',
+    borderColor: "#dbdbdbff",
     padding: 16,
-    flexDirection: 'row',
+    flexDirection: "column",
     alignItems: "center",
     marginBottom: 12,
     backgroundColor: "#fff",
@@ -191,23 +282,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#000",
   },
-  viewSection: {
-    // marginTop: 20,
-    paddingTop: 20,
-  },
-  // viewButton: {
-  //   borderWidth: 1,
-  //   borderColor: "#000",
-  //   padding: 16,
-  //   alignItems: "center",
-  //   marginBottom: 12,
-  //   backgroundColor: "#fff",
-  // },
-  // viewButtonText: {
-  //   fontSize: 16,
-  //   fontWeight: "500",
-  //   color: "#000",
-  // },
 });
 
 export default Dashboard;
