@@ -1,5 +1,5 @@
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -11,44 +11,43 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../src/context/AuthContext';
-import { customerService } from '../../src/services/customerService';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../../src/context/AuthContext";
+import { customerService } from "../../src/services/customerService";
 
 const AddCustomerModal = () => {
   const router = useRouter();
-  const { user } = useAuth();
-  const [name, setName] = useState('');
-  const [mobile, setMobile] = useState('');
-  const [email, setEmail] = useState('');
-  const [address, setAddress] = useState('');
-  const [initialCredit, setInitialCredit] = useState('');
+  const { user, userProfile } = useAuth();
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [totalDue, setTotalDue] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleAddCustomer = async () => {
-    if (!name.trim() || !mobile.trim()) {
-      Alert.alert('Error', 'Name and mobile number are required');
+    if (!name.trim() || !phone.trim()) {
+      Alert.alert("Error", "Name and mobile number are required");
       return;
     }
-    if (mobile.length !== 10) {
-      Alert.alert('Error', 'Mobile number must contain 10 digits');
+    if (phone.length !== 10) {
+      Alert.alert("Error", "Mobile number must contain 10 digits");
       return;
     }
 
+    const shopId = userProfile?.shopId || user?.uid
+
     setLoading(true);
     try {
-      await customerService.addCustomer(user.uid, {
+      await customerService.addCustomer(shopId, {
+        shopId,
         name: name.trim(),
-        mobile: mobile.trim(),
-        email: email.trim(),
-        address: address.trim(),
-        initialCredit: initialCredit || '0',
+        phone: phone.trim(),
+        totalDue: totalDue.trim() ? parseFloat(totalDue.trim()) : 0,
       });
-      Alert.alert('Success', 'Customer added successfully');
+      Alert.alert("Success", "Customer added successfully");
       router.back();
     } catch (error) {
-      Alert.alert('Error', error.message || 'Failed to add customer');
+      Alert.alert("Error", error.message || "Failed to add customer");
     } finally {
       setLoading(false);
     }
@@ -61,7 +60,7 @@ const AddCustomerModal = () => {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
       >
         <ScrollView
@@ -94,8 +93,8 @@ const AddCustomerModal = () => {
               <TextInput
                 style={styles.input}
                 placeholder="Enter 10-digit mobile number"
-                value={mobile}
-                onChangeText={setMobile}
+                value={phone}
+                onChangeText={setPhone}
                 keyboardType="phone-pad"
                 placeholderTextColor="#999"
                 maxLength={10}
@@ -104,41 +103,12 @@ const AddCustomerModal = () => {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email (Optional)</Text>
+              <Text style={styles.label}>Total Due</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter email address"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                placeholderTextColor="#999"
-                editable={!loading}
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Address (Optional)</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Enter address"
-                value={address}
-                onChangeText={setAddress}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-                placeholderTextColor="#999"
-                editable={!loading}
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Initial Credit Amount (Optional)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="₹ 0"
-                value={initialCredit}
-                onChangeText={setInitialCredit}
+                placeholder="Enter Total Due Amount"
+                value={totalDue}
+                onChangeText={setTotalDue}
                 keyboardType="numeric"
                 placeholderTextColor="#999"
                 editable={!loading}
@@ -176,7 +146,7 @@ const AddCustomerModal = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: "#F8F9FA",
   },
   keyboardView: {
     flex: 1,
@@ -186,13 +156,13 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 24,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: "#E0E0E0",
   },
   headerContent: {
     flex: 1,
@@ -200,20 +170,20 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: "600",
+    color: "#000",
   },
   subtitle: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
   formCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 14,
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#dbdbdbff',
+    borderColor: "#dbdbdbff",
     gap: 16,
   },
   inputGroup: {
@@ -221,57 +191,57 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#000',
+    fontWeight: "500",
+    color: "#000",
     paddingLeft: 4,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#dbdbdbff',
+    borderColor: "#dbdbdbff",
     borderRadius: 10,
     padding: 14,
     fontSize: 16,
-    color: '#000',
-    backgroundColor: '#fff',
+    color: "#000",
+    backgroundColor: "#fff",
   },
   textArea: {
     minHeight: 100,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
   buttonContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
-    marginTop: 'auto',
+    marginTop: "auto",
     paddingTop: 20,
   },
   cancelButton: {
     flex: 1,
     borderWidth: 1,
     borderRadius: 14,
-    borderColor: '#dbdbdbff',
+    borderColor: "#dbdbdbff",
     padding: 16,
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    alignItems: "center",
+    backgroundColor: "#fff",
   },
   cancelButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: "600",
+    color: "#000",
   },
   addButton: {
     flex: 1,
-    backgroundColor: '#059669',
+    backgroundColor: "#059669",
     borderRadius: 14,
     padding: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   addButtonDisabled: {
     opacity: 0.6,
   },
   addButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: "600",
+    color: "#fff",
   },
 });
 
