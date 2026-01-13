@@ -1,20 +1,38 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/context/AuthContext';
+import { authService } from '../../src/services/authService';
 
 const ProfileScreen = () => {
-  const { user, userProfile, signOut } = useAuth();
+  const { user, userProfile, loading } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
     try {
-      await signOut();
+      await authService.singout();
     } catch (error) {
       console.error('Logout error:', error);
     }
   };
+
+  useEffect(() => {
+    if(!user && !loading){
+      router.replace('/(auth)/LoginScreen')
+    }
+  }, [user, loading])
+
+  if (loading || !user || !userProfile) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#05865dff" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -23,7 +41,7 @@ const ProfileScreen = () => {
         <View style={styles.header}>
           <View>
             <Text style={styles.title}>Profile</Text>
-            <Text style={styles.subtitle}>{userProfile?.name || 'User'}</Text>
+            {/* <Text style={styles.subtitle}>{userProfile?.name || 'User'}</Text> */}
           </View>
         </View>
 
@@ -40,7 +58,7 @@ const ProfileScreen = () => {
             <Ionicons name="mail-outline" size={20} color="#05865dff" style={styles.icon} />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Email</Text>
-              <Text style={styles.infoValue}>{user.email}</Text>
+              <Text style={styles.infoValue}>{user?.email}</Text>
             </View>
           </View>
 
@@ -48,7 +66,7 @@ const ProfileScreen = () => {
             <Ionicons name="call-outline" size={20} color="#05865dff" style={styles.icon} />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Mobile Number</Text>
-              <Text style={styles.infoValue}>{userProfile?.mobile || 'N/A'}</Text>
+              <Text style={styles.infoValue}>+91 {userProfile?.phone || 'N/A'}</Text>
             </View>
           </View>
 
