@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/context/AuthContext';
-import { AuthService } from '../../src/services/authService';
+import { authService } from '../../src/services/authService';
 
 const ProfileScreen = () => {
   const { user, userProfile, loading } = useAuth();
@@ -12,7 +12,7 @@ const ProfileScreen = () => {
 
   const handleLogout = async () => {
     try {
-      await AuthService.signout();
+      await authService.singout();
     } catch (error) {
       console.error('Logout error:', error);
     }
