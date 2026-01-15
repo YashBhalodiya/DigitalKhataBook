@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useRouter } from "expo-router";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -11,43 +11,26 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "../../src/context/AuthContext";
-import { customerService } from "../../src/services/customerService";
+import { useCustomers } from "../../src/context/CustomerContext";
 
 const ListAllCustomers = () => {
   const router = useRouter();
-  const { user, userProfile } = useAuth();
-  const [customers, setCustomers] = useState([]);
-  const [filteredCustomer, setFilteredCustomer] = useState([]);
+  const {customers, customersLoading} = useCustomers();
   const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(true);
 
   const handleBack = () => {
     router.back();
   };
 
-  const fetchCustomers = useCallback(async () => {
-    if (!userProfile?.shopId) {
-      return;
-    }
-    setLoading(true);
-    try {
-      const customerList = await customerService.getCustomers(
-        userProfile.shopId
-      );
-      setCustomers(customerList);
-    } catch (error) {
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, [userProfile?.shopId]);
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchCustomers();
-    }, [fetchCustomers])
-  );
+  const filteredCustomers = useMemo(() => {
+    if (!searchQuery.trim()) return customers;
+    
+    const query = searchQuery.toLowerCase();
+    return customers.filter(customer => 
+      customer.name?.toLowerCase().includes(query) ||
+      customer.phoneNumber?.includes(searchQuery)
+    );
+  }, [customers, searchQuery]);
 
   const getInitial = (name) => {
     return name ? name.charAt(0).toUpperCase() : "?";
@@ -82,7 +65,7 @@ const ListAllCustomers = () => {
 
         <Text style={styles.title}>Customers</Text>
 
-        <TouchableOpacity style={styles.addButton} onPress={null}>
+        <TouchableOpacity style={styles.addButton} onPress={() => router.push('(shop-owner)/AddCustomerModal')}>
           <Ionicons name="add" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -104,13 +87,13 @@ const ListAllCustomers = () => {
         />
       </View>
 
-      {loading ? (
+      {customersLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#059669" />
         </View>
       ) : (
         <FlatList
-          data={customers}
+          data={filteredCustomers}
           renderItem={renderCustomerItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
