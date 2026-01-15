@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/context/AuthContext';
 import { authService } from '../../src/services/authService';
 
-const ProfileScreen = () => {
+const ShopOwnerProfileScreen = () => {
   const { user, userProfile, loading } = useAuth();
   const router = useRouter();
 
@@ -247,4 +247,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProfileScreen;
+export default ShopOwnerProfileScreen;

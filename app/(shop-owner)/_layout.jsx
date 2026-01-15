@@ -1,32 +1,23 @@
 import { Stack } from "expo-router";
+import { CustomerProvider } from "../../src/context/CustomerContext";
 
 export default function ShopOwnerLayout() {
   return (
-    <>
-      <Stack screenOptions={{headerShown: false}}>
-
-        <Stack.Screen 
-          name="Dashboard"  
-        />
-        <Stack.Screen 
-          name="ProfileScreen" 
-        />
-        <Stack.Screen 
-          name="AddCustomerModal" 
-          options={{ 
+    <CustomerProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Dashboard" />
+        <Stack.Screen name="ShopOwnerProfile" />
+        <Stack.Screen
+          name="AddCustomerModal"
+          options={{
             presentation: "modal",
             headerShown: false,
-            animation: "slide_from_bottom"
-          }} 
+            animation: "slide_from_bottom",
+          }}
         />
-        <Stack.Screen 
-          name="ListAllCustomers"  
-        />
-        <Stack.Screen 
-          name="AddCreditEntry"  
-        />
-
+        <Stack.Screen name="ListAllCustomers" />
+        <Stack.Screen name="AddCreditEntry" />
       </Stack>
-    </>
+    </CustomerProvider>
   );
 }
