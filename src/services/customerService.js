@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, query, serverTimestamp, setDoc, where } from "firebase/firestore";
+import { collection, doc, getDocs, increment, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "../../firebase";
 
 export const customerService = {
@@ -13,6 +13,11 @@ export const customerService = {
         phone: customerData.phone,
         totalDue: customerData.totalDue || 0,
         createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      })
+      const shopRef = doc(db, 'shops', shopId)
+      await updateDoc(shopRef, {
+        customerCount: increment(1),
         updatedAt: serverTimestamp()
       })
       return customerId;
