@@ -30,6 +30,7 @@ const LoginScreen = () => {
       setLoading(true);
       await signInWithEmail(email, password);
       console.log("Logged in success");
+      router.replace("/(shop-owner)/Dashboard");
     } catch (error) {
       console.log(error);
     } finally {
@@ -47,9 +48,9 @@ const LoginScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Spinner 
+      <Spinner
         visible={loading}
-        textContent={'Logging in...'}
+        textContent={"Logging in..."}
         textStyle={styles.spinnerTextStyle}
         color="#059669"
         overlayColor="rgba(0,0,0,0.5)"
@@ -127,9 +128,9 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
   },
   spinnerTextStyle: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   header: {
     marginBottom: 30,
@@ -165,11 +166,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   passwordContainer: {
-    position: 'relative',
-    justifyContent: 'center',
+    position: "relative",
+    justifyContent: "center",
   },
   eyeIcon: {
-    position: 'absolute',
+    position: "absolute",
     right: 14,
     padding: 4,
   },
