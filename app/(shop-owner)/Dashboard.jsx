@@ -79,7 +79,7 @@ const Dashboard = () => {
         </View>
         <TouchableOpacity
           style={styles.profileButton}
-          onPress={() => router.push("/(shop-owner)/ProfileScreen")}
+          onPress={() => router.push("/(shop-owner)/ShopOwnerProfile")}
         >
           <Ionicons name="person-circle" size={40} color="#059669" />
         </TouchableOpacity>
