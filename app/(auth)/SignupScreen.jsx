@@ -8,7 +8,7 @@ import {
   TextInput,
   ToastAndroid,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../src/context/AuthContext";
@@ -60,18 +60,24 @@ const SignupScreen = () => {
       if (role === "shop-owner") {
         await signUpShopOwner(formData);
         ToastAndroid.show("Shop created successfully!", ToastAndroid.SHORT);
-        router.replace("/(shop-owner)/Dashboard");
+        router.replace("/VerifyEmailScreen");
       } else {
         const result = await signUpCustomer(formData);
+        ToastAndroid.show(
+          "Account created! Please verify your email.",
+          ToastAndroid.LONG,
+        );
+
         if (result.customerId) {
           ToastAndroid.show("Account linked successfully!", ToastAndroid.SHORT);
         } else {
           ToastAndroid.show(
             "Account created! Contact shop owner to link.",
-            ToastAndroid.LONG
+            ToastAndroid.LONG,
           );
         }
-        router.replace("/(customer)/CustomerDashboard");
+        router.replace("/VerifyEmailScreen");
+        // router.replace("/(customer)/CustomerDashboard");
       }
     } catch (error) {
       console.log(error);
@@ -301,8 +307,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   passwordContainer: {
-    position: 'relative',
-    justifyContent: 'center',
+    position: "relative",
+    justifyContent: "center",
   },
   passwordInput: {
     borderWidth: 1,
@@ -314,7 +320,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   eyeIcon: {
-    position: 'absolute',
+    position: "absolute",
     right: 14,
     padding: 4,
   },

@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "../../firebase";
 import { authService } from "../services/authService";
@@ -21,8 +21,19 @@ export const AuthProvider = ({ children }) => {
           const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
           if (userDoc.exists()) {
             const profile = { id: userDoc.id, ...userDoc.data() };
+
+            if (firebaseUser.emailVerified && !profile.emailVerified) {
+              await updateDoc(doc(db, "users", firebaseUser.uid), {
+                emailVerified: true,
+              });
+              profile.emailVerified = true;
+            }
+
             setUserProfile(profile);
-            if (profile.role === "shop-owner") {
+
+            if (!firebaseUser.emailVerified) {
+              router.replace("/(auth)/VerifyEmailScreen");
+            } else if (profile.role === "shop-owner") {
               router.replace("/(shop-owner)/Dashboard");
             } else if (profile.role === "customer") {
               router.replace("/(customer)/CustomerDashboard");
@@ -64,6 +75,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const resendVerificationEmail = async () => {
+    try {
+      if (user) {
+        await authService.resendVerificationEmail(user);
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const value = {
     user,
     userProfile,
@@ -72,6 +93,7 @@ export const AuthProvider = ({ children }) => {
     signUpCustomer,
     signUpShopOwner,
     signOut,
+    resendVerificationEmail,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
