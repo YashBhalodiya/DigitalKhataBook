@@ -15,26 +15,31 @@ import { customerService } from "../../src/services/customerService";
 const Dashboard = () => {
   const router = useRouter();
   const { userProfile } = useAuth();
-  const [shopData, setShopData] = useState(null);
+  const [shopStats, setShopStats] = useState({
+    totalOutstanding: 0,
+    customerCount: 0,
+  });
   const [loading, setLoading] = useState(false);
-  const [customerCount, setCustomerCount] = useState(0);
 
-  const fetchCustomerCount = async () => {
+  const fetchShopStats = async () => {
     if (!userProfile?.shopId) {
       return;
     }
     try {
-      const count = await customerService.getCustomerCount(userProfile.shopId);
-      setCustomerCount(count);
+      setLoading(true);
+      const stats = await customerService.getShopStats(userProfile.shopId);
+      setShopStats(stats);
     } catch (error) {
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   useFocusEffect(
     useCallback(() => {
-      fetchCustomerCount();
-    }, [fetchCustomerCount])
+      fetchShopStats();
+    }, [userProfile?.shopId]),
   );
 
   if (loading) {
@@ -90,12 +95,14 @@ const Dashboard = () => {
           <Text style={[styles.statLabel, styles.whiteText]}>
             Total Outstanding
           </Text>
-          <Text style={[styles.statValue, styles.whiteText]}>₹ {shopData?.totalOutstanding || 0}</Text>
+          <Text style={[styles.statValue, styles.whiteText]}>
+            ₹ {shopStats?.totalOutstanding || 0}
+          </Text>
         </View>
 
         <View style={styles.statCard}>
           <Text style={styles.statLabel}>Number of Customers</Text>
-          <Text style={styles.statValue}>{customerCount}</Text>
+          <Text style={styles.statValue}>{shopStats.customerCount}</Text>
         </View>
       </View>
 
