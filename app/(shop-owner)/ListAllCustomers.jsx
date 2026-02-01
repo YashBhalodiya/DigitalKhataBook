@@ -15,7 +15,7 @@ import { useCustomers } from "../../src/context/CustomerContext";
 
 const ListAllCustomers = () => {
   const router = useRouter();
-  const {customers, customersLoading} = useCustomers();
+  const { customers, customersLoading } = useCustomers();
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleBack = () => {
@@ -24,11 +24,12 @@ const ListAllCustomers = () => {
 
   const filteredCustomers = useMemo(() => {
     if (!searchQuery.trim()) return customers;
-    
+
     const query = searchQuery.toLowerCase();
-    return customers.filter(customer => 
-      customer.name?.toLowerCase().includes(query) ||
-      customer.phoneNumber?.includes(searchQuery)
+    return customers.filter(
+      (customer) =>
+        customer.name?.toLowerCase().includes(query) ||
+        customer.phoneNumber?.includes(searchQuery),
     );
   }, [customers, searchQuery]);
 
@@ -38,7 +39,15 @@ const ListAllCustomers = () => {
 
   const renderCustomerItem = ({ item }) => {
     return (
-      <TouchableOpacity style={styles.customerItem}>
+      <TouchableOpacity
+        style={styles.customerItem}
+        onPress={() =>
+          router.push({
+            pathname: "/(shop-owner)/CustomerDetail",
+            params: { customerId: item.id },
+          })
+        }
+      >
         <View style={styles.customerInfo}>
           <View style={styles.avatarContainer}>
             <Text style={styles.avatarText}>{getInitial(item.name)}</Text>
@@ -65,7 +74,10 @@ const ListAllCustomers = () => {
 
         <Text style={styles.title}>Customers</Text>
 
-        <TouchableOpacity style={styles.addButton} onPress={() => router.push('(shop-owner)/AddCustomerModal')}>
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => router.push("(shop-owner)/AddCustomerModal")}
+        >
           <Ionicons name="add" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -121,7 +133,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 20,
     paddingBottom: 12,
-    backgroundColor: "#ffffffff",
   },
   backButton: {
     width: 40,
