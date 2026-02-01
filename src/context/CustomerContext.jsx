@@ -19,7 +19,7 @@ export const CustomerProvider = ({ children }) => {
     }
     const q = query(
       collection(db, "customers"),
-      where("shopId", "==", userProfile.shopId)
+      where("shopId", "==", userProfile.shopId),
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const customerData = snapshot.docs.map((doc) => ({

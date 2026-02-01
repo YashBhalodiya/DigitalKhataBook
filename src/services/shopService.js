@@ -1,12 +1,17 @@
-import { collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  serverTimestamp,
+  setDoc,
+} from "firebase/firestore";
 import { db } from "../../firebase";
-
 
 export const shopService = {
   createShop: async (ownerId, shopData) => {
     try {
-      const shopRef = doc(collection(db, 'shops'))
-      const shopId = shopRef.id
+      const shopRef = doc(collection(db, "shops"));
+      const shopId = shopRef.id;
       await setDoc(shopRef, {
         ownerId,
         shopName: shopData.shopName,
@@ -15,9 +20,9 @@ export const shopService = {
         totalOutstanding: 0,
         customerCount: 0,
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      })
-      return shopId
+        updatedAt: serverTimestamp(),
+      });
+      return shopId;
     } catch (error) {
       throw error;
     }
@@ -33,7 +38,12 @@ export const shopService = {
 
   getShopById: async (shopId) => {
     try {
-      // Get single shop
+      const shopRef = doc(db, "shops", shopId);
+      const shopDoc = await getDoc(shopRef);
+      return {
+        id: shopDoc.id,
+        ...shopDoc.data(),
+      };
     } catch (error) {
       throw error;
     }
@@ -77,5 +87,5 @@ export const shopService = {
     } catch (error) {
       throw error;
     }
-  }
+  },
 };
