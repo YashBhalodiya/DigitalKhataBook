@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Spinner from "react-native-loading-spinner-overlay";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../src/context/AuthContext";
 
@@ -17,9 +16,8 @@ const LoginScreen = () => {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(false);
-  const { signInWithEmail } = useAuth();
+  const { signInWithEmail, forgotPassword } = useAuth();
 
   const handleLogin = async () => {
     try {
@@ -27,19 +25,24 @@ const LoginScreen = () => {
         ToastAndroid.show("Please fill the fields", ToastAndroid.SHORT);
         return;
       }
-      setLoading(true);
       await signInWithEmail(email, password);
       console.log("Logged in success");
-      router.replace("/(shop-owner)/Dashboard");
+      // router.replace("/(shop-owner)/Dashboard");
     } catch (error) {
       console.log(error);
-    } finally {
-      setLoading(false);
     }
   };
 
-  const forgotPassword = () => {
-    console.log("Password forgot");
+  const handleforgotPassword = async () => {
+    try {
+      await forgotPassword(email);
+      ToastAndroid.show(
+        "Check your inbox to reset password",
+        ToastAndroid.SHORT,
+      );
+    } catch (error) {
+      throw error;
+    }
   };
 
   const handleCreateAccount = () => {
@@ -48,13 +51,6 @@ const LoginScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Spinner
-        visible={loading}
-        textContent={"Logging in..."}
-        textStyle={styles.spinnerTextStyle}
-        color="#059669"
-        overlayColor="rgba(0,0,0,0.5)"
-      />
       <View style={styles.header}>
         <Text style={styles.title}>Welcome Back</Text>
         <Text style={styles.subTitle}>Please Login</Text>
@@ -98,7 +94,7 @@ const LoginScreen = () => {
 
         <TouchableOpacity
           style={styles.forgotPassButton}
-          onPress={forgotPassword}
+          onPress={handleforgotPassword}
         >
           <Text style={styles.forgotPassButtonText}>Forgot Passoword?</Text>
         </TouchableOpacity>
@@ -126,11 +122,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     paddingHorizontal: 20,
     justifyContent: "flex-start",
-  },
-  spinnerTextStyle: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "500",
   },
   header: {
     marginBottom: 30,

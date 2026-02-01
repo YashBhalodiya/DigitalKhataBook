@@ -2,6 +2,7 @@ import { auth, db } from "@/firebase";
 import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
@@ -15,7 +16,7 @@ export const authService = {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
-        password
+        password,
       );
       const userId = userCredential.user.uid;
 
@@ -48,16 +49,16 @@ export const authService = {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
-        password
+        password,
       );
       const userId = userCredential.user.uid;
 
       await sendEmailVerification(userCredential.user);
 
       await setDoc(doc(db, "users", userId), {
-        name,
-        email,
-        phone,
+        name: name,
+        email: email,
+        phone: phone,
         role: "customer",
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -72,7 +73,7 @@ export const authService = {
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
-        password
+        password,
       );
       const userId = userCredential.user.uid;
 
@@ -94,6 +95,13 @@ export const authService = {
   resendVerificationEmail: async (user) => {
     try {
       await sendEmailVerification(user);
+    } catch (error) {
+      throw error;
+    }
+  },
+  forgotPassword: async (email) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
     } catch (error) {
       throw error;
     }
