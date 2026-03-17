@@ -7,7 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "khatabook",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
@@ -20,7 +19,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": true,
-      "package": "com.yashpatel25.KhataBook"
+      "package": "com.yashpatel25.KhataBook",
+      "useNextNotificationsApi": true
     },
     "web": {
       "output": "static",
@@ -39,11 +39,28 @@
             "backgroundColor": "#000000"
           }
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#059669",
+          "sounds": [],
+          "androidMode": "default",
+          "androidCollapsedTitle": "#{unread_notifications} new notifications"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "4f625537-7b2d-4762-8a79-7fbe06f16d9f"
+      }
+    },
+    "owner": "yashpatel25"
   }
 }

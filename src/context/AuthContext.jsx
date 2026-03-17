@@ -1,9 +1,10 @@
-import { useRouter } from "expo-router";
+import { useRouter, useSegments } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "../../firebase";
 import { authService } from "../services/authService";
+import {notificationService} from '../services/notificationService'
 
 export const AuthContext = createContext();
 
@@ -12,6 +13,7 @@ export const AuthProvider = ({ children }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const segments = useSegments();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -32,11 +34,30 @@ export const AuthProvider = ({ children }) => {
             setUserProfile(profile);
 
             if (!firebaseUser.emailVerified) {
+              console.log("Redirecting to verify email");
               router.replace("/(auth)/VerifyEmailScreen");
-            } else if (profile.role === "shop-owner") {
-              router.replace("/(shop-owner)/Dashboard");
-            } else if (profile.role === "customer") {
-              router.replace("/(customer)/CustomerDashboard");
+            } else {
+              // Check user role and navigate accordingly
+              if (profile.role === "shop-owner") {
+                router.replace("/(shop-owner)/Dashboard");
+              } else if (profile.role === "customer") {
+                // After confirming role === "customer", find their customer record and link it
+                const customersQuery = query(
+                  collection(db, "customers"),
+                  where("phone", "==", profile.phone),
+                );
+                const snap = await getDocs(customersQuery);
+                if (!snap.empty) {
+                  await updateDoc(snap.docs[0].ref, {
+                    userId: firebaseUser.uid,
+                  });
+                }
+                notificationService.registerPushToken(firebaseUser.uid); // non-blocking
+                router.replace("/(customer)/CustomerDashboard");
+              } else {
+                console.error("Unknown user role:", profile.role);
+                await authService.singout();
+              }
             }
           }
         } catch (error) {
@@ -45,6 +66,10 @@ export const AuthProvider = ({ children }) => {
       } else {
         setUser(null);
         setUserProfile(null);
+        const inAuthGroup = segments[0] === "(auth)";
+        if (!inAuthGroup) {
+          router.replace("/(auth)/LoginScreen");
+        }
       }
       setLoading(false);
     });
@@ -85,6 +110,27 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const forgotPassword = async (email) => {
+    try {
+      await authService.forgotPassword(email);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (user) {
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          setUserProfile({ id: userDoc.id, ...userDoc.data() });
+        }
+      } catch (error) {
+        console.error("Failed to refresh profile:", error);
+      }
+    }
+  };
+
   const value = {
     user,
     userProfile,
@@ -94,6 +140,8 @@ export const AuthProvider = ({ children }) => {
     signUpShopOwner,
     signOut,
     resendVerificationEmail,
+    forgotPassword,
+    refreshProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
