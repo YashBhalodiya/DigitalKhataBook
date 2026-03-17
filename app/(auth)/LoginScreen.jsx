@@ -2,11 +2,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   ToastAndroid,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -25,17 +30,21 @@ const LoginScreen = () => {
         ToastAndroid.show("Please fill the fields", ToastAndroid.SHORT);
         return;
       }
-      await signInWithEmail(email, password);
+      await signInWithEmail(email.trim(), password);
       console.log("Logged in success");
-      // router.replace("/(shop-owner)/Dashboard");
     } catch (error) {
       console.log(error);
+      ToastAndroid.show("Login failed: " + (error.message || "Invalid credentials"), ToastAndroid.LONG);
     }
   };
 
   const handleforgotPassword = async () => {
     try {
-      await forgotPassword(email);
+      if (!email) {
+        ToastAndroid.show("Please enter your email first", ToastAndroid.SHORT);
+        return;
+      }
+      await forgotPassword(email.trim());
       ToastAndroid.show(
         "Check your inbox to reset password",
         ToastAndroid.SHORT,
@@ -51,12 +60,22 @@ const LoginScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subTitle}>Please Login</Text>
-      </View>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "android" ? "padding" : undefined}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.header}>
+              <Text style={styles.title}>Welcome Back</Text>
+              <Text style={styles.subTitle}>Please Login</Text>
+            </View>
 
-      <View style={styles.formContainer}>
+            <View style={styles.formContainer}>
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Email</Text>
           <TextInput
@@ -107,11 +126,14 @@ const LoginScreen = () => {
           style={styles.createAccountButton}
           onPress={handleCreateAccount}
         >
-          <Text style={styles.createAccountText}>
-            Don't have an account? Click here
-          </Text>
-        </TouchableOpacity>
-      </View>
+              <Text style={styles.createAccountText}>
+                Don't have an account? Click here
+              </Text>
+            </TouchableOpacity>
+          </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };

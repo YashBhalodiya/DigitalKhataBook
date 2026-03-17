@@ -2,12 +2,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   ToastAndroid,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -41,6 +45,22 @@ const SignupScreen = () => {
         return;
       }
 
+      const validatePassword = (pass) => {
+        const minLength = pass.length >= 6;
+        const hasUpper = /[A-Z]/.test(pass);
+        const hasLower = /[a-z]/.test(pass);
+        const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(pass);
+        return minLength && hasUpper && hasLower && hasSpecial;
+      };
+
+      if (!validatePassword(formData.password)) {
+        ToastAndroid.show(
+          "Password needs minimum 6 characters with upper, lower, & special char",
+          ToastAndroid.LONG
+        );
+        return;
+      }
+
       if (formData.password !== formData.confirmPassword) {
         ToastAndroid.show("Passwords don't match", ToastAndroid.SHORT);
         return;
@@ -58,11 +78,11 @@ const SignupScreen = () => {
       setLoading(true);
 
       if (role === "shop-owner") {
-        await signUpShopOwner(formData);
+        await signUpShopOwner({ ...formData, email: formData.email.trim() });
         ToastAndroid.show("Shop created successfully!", ToastAndroid.SHORT);
-        router.replace("/VerifyEmailScreen");
+        router.replace("/(auth)/VerifyEmailScreen");
       } else {
-        const result = await signUpCustomer(formData);
+        const result = await signUpCustomer({ ...formData, email: formData.email.trim() });
         ToastAndroid.show(
           "Account created! Please verify your email.",
           ToastAndroid.LONG,
@@ -76,7 +96,7 @@ const SignupScreen = () => {
             ToastAndroid.LONG,
           );
         }
-        router.replace("/VerifyEmailScreen");
+        router.replace("/(auth)/VerifyEmailScreen");
         // router.replace("/(customer)/CustomerDashboard");
       }
     } catch (error) {
@@ -88,7 +108,16 @@ const SignupScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "android" ? "padding" : undefined}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
         <View style={styles.header}>
           <Text style={styles.title}>Create Account</Text>
           <Text style={styles.subTitle}>Sign up to get started</Text>
@@ -236,7 +265,9 @@ const SignupScreen = () => {
             <Text style={styles.loginText}>Already have an account? Login</Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
