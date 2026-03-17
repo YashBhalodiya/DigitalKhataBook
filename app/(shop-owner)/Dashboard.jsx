@@ -1,16 +1,19 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { BarChart } from "react-native-gifted-charts";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../src/context/AuthContext";
 import { customerService } from "../../src/services/customerService";
+import { notificationService } from "../../src/services/notificationService";
 
 const Dashboard = () => {
   const router = useRouter();
@@ -20,6 +23,7 @@ const Dashboard = () => {
     customerCount: 0,
   });
   const [loading, setLoading] = useState(false);
+  const [topCustomers, setTopCustomers] = useState([]);
 
   const fetchShopStats = async () => {
     if (!userProfile?.shopId) {
@@ -29,6 +33,10 @@ const Dashboard = () => {
       setLoading(true);
       const stats = await customerService.getShopStats(userProfile.shopId);
       setShopStats(stats);
+      const customers = await customerService.getTopCustomers(
+        userProfile.shopId,
+      );
+      setTopCustomers(customers);
     } catch (error) {
       throw error;
     } finally {
@@ -39,8 +47,41 @@ const Dashboard = () => {
   useFocusEffect(
     useCallback(() => {
       fetchShopStats();
+      scheduleHighOutstandingReminder();
     }, [userProfile?.shopId]),
   );
+
+  useEffect(() => {
+    // Initialize notifications on app start
+    notificationService.initialize();
+  }, []);
+
+  const sendPaymentReminder = async (customer) => {
+    try {
+      await notificationService.sendInstantNotification(
+        "Payment Reminder Sent",
+        `Reminder sent to ${customer.name} for ₹${customer.outstanding}`,
+        { customerId: customer.id },
+      );
+    } catch (error) {
+      console.error("Error sending reminder:", error);
+    }
+  };
+
+  // Schedule reminder for high outstanding customers
+  const scheduleHighOutstandingReminder = async () => {
+    if (shopStats.totalOutstanding > 10000) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(10, 0, 0);
+
+      await notificationService.schedulePaymentReminder(
+        "All Customers",
+        shopStats.totalOutstanding,
+        tomorrow,
+      );
+    }
+  };
 
   if (loading) {
     return (
@@ -77,95 +118,140 @@ const Dashboard = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Dashboard</Text>
-          <Text style={styles.subtitle}>Shop Owner: {userProfile?.name}</Text>
-        </View>
-        <TouchableOpacity
-          style={styles.profileButton}
-          onPress={() => router.push("/(shop-owner)/ShopOwnerProfile")}
-        >
-          <Ionicons name="person-circle" size={40} color="#059669" />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.statsContainer}>
-        <View style={[styles.statCard, styles.outstandingCard]}>
-          <Text style={[styles.statLabel, styles.whiteText]}>
-            Total Outstanding
-          </Text>
-          <Text style={[styles.statValue, styles.whiteText]}>
-            ₹ {shopStats?.totalOutstanding || 0}
-          </Text>
-        </View>
-
-        <View style={styles.statCard}>
-          <Text style={styles.statLabel}>Number of Customers</Text>
-          <Text style={styles.statValue}>{shopStats.customerCount}</Text>
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.actionButtonsContainer}>
-          <TouchableOpacity style={styles.actionCard} onPress={addCustomer}>
-            <View style={styles.iconContainer}>
-              <Ionicons name="person-add-outline" size={28} color="#05865dff" />
-            </View>
-            <Text style={styles.actionCardText}>Add Customer</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionCard} onPress={addCreditEntry}>
-            <View style={styles.iconContainer}>
-              <Ionicons name="add" size={28} color="#05865dff" />
-            </View>
-            <Text style={styles.actionCardText}>Add Credit Entry</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionCard} onPress={monthlySummary}>
-            <View style={styles.iconContainer}>
-              <Ionicons
-                name="stats-chart-outline"
-                size={28}
-                color="#05865dff"
-              />
-            </View>
-            <Text style={styles.actionCardText}>Monthly Summary</Text>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 24 }}
+      >
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.title}>Dashboard</Text>
+            <Text style={styles.subtitle}>Shop Owner: {userProfile?.name}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.profileButton}
+            onPress={() => router.push("/(shop-owner)/ShopOwnerProfile")}
+          >
+            <Ionicons name="person-circle" size={40} color="#059669" />
           </TouchableOpacity>
         </View>
-      </View>
 
-      <View style={styles.viewSection}>
-        <Text style={styles.sectionTitle}>Manage</Text>
-        <TouchableOpacity style={styles.actionButton} onPress={viewAllCustomer}>
-          <Ionicons
-            name="people-outline"
-            size={24}
-            color="#05865dff"
-            style={{
-              backgroundColor: "#eff8f5ff",
-              padding: 5,
-              borderRadius: 5,
-            }}
-          />
-          <Text style={styles.actionButtonText}>View All Customers</Text>
-        </TouchableOpacity>
+        <View style={styles.statsContainer}>
+          <View style={[styles.statCard, styles.outstandingCard]}>
+            <Text style={[styles.statLabel, styles.whiteText]}>
+              Total Outstanding
+            </Text>
+            <Text style={[styles.statValue, styles.whiteText]}>
+              ₹ {shopStats?.totalOutstanding || 0}
+            </Text>
+          </View>
 
-        <TouchableOpacity style={styles.actionButton} onPress={allTransaction}>
-          <Ionicons
-            name="clipboard-outline"
-            size={24}
-            color="#05865dff"
-            style={{
-              backgroundColor: "#eff8f5ff",
-              padding: 5,
-              borderRadius: 5,
-            }}
-          />
-          <Text style={styles.actionButtonText}>All Transactions</Text>
-        </TouchableOpacity>
-      </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>Number of Customers</Text>
+            <Text style={styles.statValue}>{shopStats.customerCount}</Text>
+          </View>
+        </View>
+
+        {topCustomers.length > 0 && (
+          <View style={styles.chartCard}>
+            <Text style={styles.chartTitle}>
+              Top Customers by Outstanding (₹)
+            </Text>
+            <BarChart
+              data={topCustomers.map((c) => ({
+                value: c.totalDue,
+                label: c.name.split(" ")[0],
+                frontColor: "#059669",
+              }))}
+              barWidth={40}
+              spacing={18}
+              roundedTop
+              xAxisThickness={1}
+              yAxisThickness={0}
+              yAxisTextStyle={{ color: "#6b7280", fontSize: 10 }}
+              xAxisLabelTextStyle={{ color: "#6b7280", fontSize: 10 }}
+              noOfSections={4}
+              height={160}
+            />
+          </View>
+        )}
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.actionButtonsContainer}>
+            <TouchableOpacity style={styles.actionCard} onPress={addCustomer}>
+              <View style={styles.iconContainer}>
+                <Ionicons
+                  name="person-add-outline"
+                  size={28}
+                  color="#05865dff"
+                />
+              </View>
+              <Text style={styles.actionCardText}>Add Customer</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={addCreditEntry}
+            >
+              <View style={styles.iconContainer}>
+                <Ionicons name="add" size={28} color="#05865dff" />
+              </View>
+              <Text style={styles.actionCardText}>Add Credit Entry</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={monthlySummary}
+            >
+              <View style={styles.iconContainer}>
+                <Ionicons
+                  name="stats-chart-outline"
+                  size={28}
+                  color="#05865dff"
+                />
+              </View>
+              <Text style={styles.actionCardText}>Monthly Summary</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.viewSection}>
+          <Text style={styles.sectionTitle}>Manage</Text>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={viewAllCustomer}
+          >
+            <Ionicons
+              name="people-outline"
+              size={24}
+              color="#05865dff"
+              style={{
+                backgroundColor: "#eff8f5ff",
+                padding: 5,
+                borderRadius: 5,
+              }}
+            />
+            <Text style={styles.actionButtonText}>View All Customers</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={allTransaction}
+          >
+            <Ionicons
+              name="clipboard-outline"
+              size={24}
+              color="#05865dff"
+              style={{
+                backgroundColor: "#eff8f5ff",
+                padding: 5,
+                borderRadius: 5,
+              }}
+            />
+            <Text style={styles.actionButtonText}>All Transactions</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -288,6 +374,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
     color: "#000",
+  },
+  chartCard: {
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+  },
+  chartTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#111827",
+    marginBottom: 12,
   },
 });
 

@@ -17,6 +17,9 @@ export default function ShopOwnerLayout() {
         />
         <Stack.Screen name="ListAllCustomers" />
         <Stack.Screen name="AddCreditEntry" />
+        <Stack.Screen name="CustomerDetail" />
+        <Stack.Screen name="EditProfileModal" options={{ presentation: "modal", headerShown: false, animation: "slide_from_bottom" }} />
+        <Stack.Screen name="ChangePasswordModal" options={{ presentation: "modal", headerShown: false, animation: "slide_from_bottom" }} />
       </Stack>
     </CustomerProvider>
   );

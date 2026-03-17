@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,12 +13,15 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../src/context/AuthContext";
 import { customerService } from "../../src/services/customerService";
+import { transactionService } from "../../src/services/transactionService";
 
 const CustomerDetail = () => {
   const router = useRouter();
   const { customerId } = useLocalSearchParams();
   const { userProfile } = useAuth();
   const [customer, setCustomer] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [stats, setStats] = useState({ credit: 0, payment: 0, count: 0 });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -27,50 +31,80 @@ const CustomerDetail = () => {
   const fetchCustomerDetails = async () => {
     if (!customerId && !userProfile?.shopId) {
       ToastAndroid.show("Customer not found", ToastAndroid.SHORT);
-      // router.back();
       return;
     }
     try {
+      setLoading(true);
       const customerData = await customerService.getCustomerById(customerId);
       setCustomer(customerData);
-      console.log(customerId);
-      console.log(customerData);
+
+      const txs = await transactionService.getCustomerTransactions(customerId);
+      setTransactions(txs);
+
+      let totalCredit = 0;
+      let totalPayment = 0;
+      txs.forEach((t) => {
+        if (t.type === "credit") totalCredit += t.amount;
+        if (t.type === "payment") totalPayment += t.amount;
+      });
+      setStats({ credit: totalCredit, payment: totalPayment, count: txs.length });
     } catch (error) {
-      throw error;
+      ToastAndroid.show("Error fetching details", ToastAndroid.SHORT);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleAddCredit = () => {
-    // TODO: Navigate to add credit entry with customer pre-selected
+    router.push({
+      pathname: "(shop-owner)/AddCreditEntry",
+      params: { preSelectedCustomerId: customerId },
+    });
   };
 
   const handleAddPayment = () => {
-    // TODO: Navigate to add payment entry with customer pre-selected
+    router.push({
+      pathname: "(shop-owner)/AddPaymentEntry",
+      params: { preSelectedCustomerId: customerId },
+    });
   };
 
   const handleEditCustomer = () => {
-    // TODO: Navigate to edit customer screen
+    ToastAndroid.show("Edit customer feature coming soon", ToastAndroid.SHORT);
   };
 
   const handleDeleteCustomer = () => {
-    // TODO: Show confirmation dialog and delete customer
+    Alert.alert(
+      "Delete Customer",
+      "Are you sure you want to delete this customer? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await customerService.deleteCustomer(customerId, userProfile.shopId);
+              ToastAndroid.show("Customer deleted", ToastAndroid.SHORT);
+              router.back();
+            } catch (error) {
+              ToastAndroid.show("Failed to delete customer", ToastAndroid.SHORT);
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Customer Details</Text>
-        <TouchableOpacity
-          onPress={handleEditCustomer}
-          style={styles.editButton}
-        >
+        <TouchableOpacity onPress={handleEditCustomer} style={styles.editButton}>
           <Ionicons name="create-outline" size={24} color="#059669" />
         </TouchableOpacity>
       </View>
@@ -86,7 +120,7 @@ const CustomerDetail = () => {
               <Text style={styles.customerName}>{customer?.name}</Text>
               <View style={styles.phoneRow}>
                 <Ionicons name="call-outline" size={16} color="#666" />
-                <Text style={styles.customerPhone}>+91 1234567890</Text>
+                <Text style={styles.customerPhone}>{customer?.phone}</Text>
               </View>
             </View>
           </View>
@@ -94,7 +128,7 @@ const CustomerDetail = () => {
           {/* Outstanding Amount */}
           <View style={styles.dueContainer}>
             <Text style={styles.dueLabel}>Total Outstanding</Text>
-            <Text style={styles.dueAmount}>₹ 0</Text>
+            <Text style={styles.dueAmount}>₹ {customer?.totalDue || 0}</Text>
           </View>
         </View>
 
@@ -124,50 +158,62 @@ const CustomerDetail = () => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Transaction History</Text>
-            <TouchableOpacity>
-              <Text style={styles.viewAllText}>View All</Text>
-            </TouchableOpacity>
+            {transactions.length > 5 && (
+              <TouchableOpacity>
+                <Text style={styles.viewAllText}>View All</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
-          {/* Sample Transaction Items - Replace with actual data */}
-          <View style={styles.transactionCard}>
-            <View style={styles.transactionHeader}>
-              <View style={[styles.transactionIcon, styles.creditIcon]}>
-                <Ionicons name="arrow-up-outline" size={20} color="#dc2626" />
+          {transactions.length > 0 ? (
+            transactions.slice(0, 5).map((tx) => (
+              <View key={tx.id} style={styles.transactionCard}>
+                <View style={styles.transactionHeader}>
+                  <View
+                    style={[
+                      styles.transactionIcon,
+                      tx.type === "credit" ? styles.creditIcon : styles.paymentIcon,
+                    ]}
+                  >
+                    <Ionicons
+                      name={tx.type === "credit" ? "arrow-up-outline" : "arrow-down-outline"}
+                      size={20}
+                      color={tx.type === "credit" ? "#dc2626" : "#059669"}
+                    />
+                  </View>
+                  <View style={styles.transactionInfo}>
+                    <Text style={styles.transactionType}>
+                      {tx.type === "credit" ? "Credit" : "Payment"}
+                    </Text>
+                    <Text style={styles.transactionDate}>
+                      {tx.createdAt
+                        ? new Date(tx.createdAt.toMillis()).toLocaleDateString()
+                        : "Just now"}
+                    </Text>
+                  </View>
+                  <Text
+                    style={[
+                      styles.transactionAmount,
+                      tx.type === "payment" && styles.paymentAmount,
+                    ]}
+                  >
+                    {tx.type === "credit" ? "+ " : "- "}₹ {tx.amount}
+                  </Text>
+                </View>
+                {tx.description ? (
+                  <Text style={styles.transactionDescription}>{tx.description}</Text>
+                ) : null}
               </View>
-              <View style={styles.transactionInfo}>
-                <Text style={styles.transactionType}>Credit</Text>
-                <Text style={styles.transactionDate}>28-01-2026</Text>
-              </View>
-              <Text style={styles.transactionAmount}>+ ₹ 500</Text>
-            </View>
-            <Text style={styles.transactionDescription}>Groceries</Text>
-          </View>
-
-          <View style={styles.transactionCard}>
-            <View style={styles.transactionHeader}>
-              <View style={[styles.transactionIcon, styles.paymentIcon]}>
-                <Ionicons name="arrow-down-outline" size={20} color="#059669" />
-              </View>
-              <View style={styles.transactionInfo}>
-                <Text style={styles.transactionType}>Payment</Text>
-                <Text style={styles.transactionDate}>27-01-2026</Text>
-              </View>
-              <Text style={[styles.transactionAmount, styles.paymentAmount]}>
-                - ₹ 200
+            ))
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="receipt-outline" size={60} color="#ccc" />
+              <Text style={styles.emptyText}>No transactions yet</Text>
+              <Text style={styles.emptySubText}>
+                Add credit or payment entries to see transaction history
               </Text>
             </View>
-            <Text style={styles.transactionDescription}>Cash payment</Text>
-          </View>
-
-          {/* Empty State - Show when no transactions */}
-          <View style={styles.emptyContainer}>
-            <Ionicons name="receipt-outline" size={60} color="#ccc" />
-            <Text style={styles.emptyText}>No transactions yet</Text>
-            <Text style={styles.emptySubText}>
-              Add credit or payment entries to see transaction history
-            </Text>
-          </View>
+          )}
         </View>
 
         {/* Customer Stats */}
@@ -175,26 +221,18 @@ const CustomerDetail = () => {
           <Text style={styles.sectionTitle}>Statistics</Text>
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
-              <Ionicons
-                name="arrow-up-circle-outline"
-                size={24}
-                color="#dc2626"
-              />
-              <Text style={styles.statValue}>₹ 0</Text>
+              <Ionicons name="arrow-up-circle-outline" size={24} color="#dc2626" />
+              <Text style={styles.statValue}>₹ {stats.credit}</Text>
               <Text style={styles.statLabel}>Total Credit</Text>
             </View>
             <View style={styles.statBox}>
-              <Ionicons
-                name="arrow-down-circle-outline"
-                size={24}
-                color="#059669"
-              />
-              <Text style={styles.statValue}>₹ 0</Text>
+              <Ionicons name="arrow-down-circle-outline" size={24} color="#059669" />
+              <Text style={styles.statValue}>₹ {stats.payment}</Text>
               <Text style={styles.statLabel}>Total Payment</Text>
             </View>
             <View style={styles.statBox}>
               <Ionicons name="receipt-outline" size={24} color="#0891b2" />
-              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statValue}>{stats.count}</Text>
               <Text style={styles.statLabel}>Transactions</Text>
             </View>
           </View>
@@ -203,10 +241,7 @@ const CustomerDetail = () => {
         {/* Danger Zone */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Danger Zone</Text>
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={handleDeleteCustomer}
-          >
+          <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteCustomer}>
             <Ionicons name="trash-outline" size={20} color="#dc2626" />
             <Text style={styles.deleteButtonText}>Delete Customer</Text>
           </TouchableOpacity>
