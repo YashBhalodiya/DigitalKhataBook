@@ -94,13 +94,19 @@ const CustomerProfileScreen = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account Actions</Text>
 
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => router.push("/(customer)/EditProfileModal")}
+          >
             <Ionicons name="create-outline" size={24} color='#05865dff' style={styles.actionIcon} />
             <Text style={styles.actionButtonText}>Edit Profile</Text>
             <Ionicons name="chevron-forward" size={20} color="#666" style={styles.chevron} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={() => router.push("/(customer)/ChangePasswordModal")}
+          >
             <Ionicons name="lock-closed-outline" size={24} color='#05865dff' style={styles.actionIcon} />
             <Text style={styles.actionButtonText}>Change Password</Text>
             <Ionicons name="chevron-forward" size={20} color="#666" style={styles.chevron} />

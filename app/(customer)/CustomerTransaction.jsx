@@ -1,65 +1,59 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from "../../src/context/AuthContext";
+import { customerService } from "../../src/services/customerService";
+import { transactionService } from "../../src/services/transactionService";
+import { shopService } from "../../src/services/shopService";
 
 const CustomerTransaction = () => {
   const router = useRouter();
+  const { userProfile } = useAuth();
+  const [customer, setCustomer] = useState(null);
+  const [shop, setShop] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Sample transaction data
-  const transactions = [
-    {
-      id: 1,
-      type: 'purchase',
-      title: 'Purchase',
-      date: 'Jan 7, 2026',
-      description: 'Groceries purchase',
-      amount: 850,
-    },
-    {
-      id: 2,
-      type: 'payment',
-      title: 'Payment',
-      date: 'Jan 5, 2026',
-      description: 'Cash payment',
-      amount: 1000,
-    },
-    {
-      id: 3,
-      type: 'purchase',
-      title: 'Purchase',
-      date: 'Jan 3, 2026',
-      description: 'Monthly supplies',
-      amount: 1200,
-    },
-    {
-      id: 4,
-      type: 'payment',
-      title: 'Payment',
-      date: 'Dec 30, 2025',
-      description: 'Partial payment',
-      amount: 500,
-    },
-    {
-      id: 5,
-      type: 'purchase',
-      title: 'Purchase',
-      date: 'Dec 28, 2025',
-      description: 'Bulk order',
-      amount: 1500,
-    },
-    {
-      id: 6,
-      type: 'payment',
-      title: 'Payment',
-      date: 'Dec 25, 2025',
-      description: 'Full settlement',
-      amount: 2000,
-    },
-  ];
+  useFocusEffect(
+    useCallback(() => {
+      fetchTransactionData();
+    }, [userProfile?.id])
+  );
 
-  const currentBalance = 3250;
-  const shopName = 'Kumar General Store';
+  const fetchTransactionData = async () => {
+    if (!userProfile?.id) return;
+    try {
+      setLoading(true);
+      const customerData = await customerService.getCustomerByUserId(userProfile.id);
+      setCustomer(customerData);
+      
+      if (customerData?.shopId) {
+        const shopData = await shopService.getShopById(customerData.shopId);
+        setShop(shopData);
+      }
+
+      if (customerData?.id) {
+        const txs = await transactionService.getCustomerTransactions(customerData.id);
+        setTransactions(txs);
+      }
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#059669" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -73,7 +67,7 @@ const CustomerTransaction = () => {
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
           <Text style={styles.headerTitle}>My Transactions</Text>
-          <Text style={styles.headerSubtitle}>{shopName}</Text>
+          <Text style={styles.headerSubtitle}>{shop?.shopName || shop?.ownerName || "Your Shop"}</Text>
         </View>
         <View style={styles.placeholder} />
       </View>
@@ -84,41 +78,48 @@ const CustomerTransaction = () => {
       >
         {/* Transaction List */}
         <View style={styles.transactionList}>
-          {transactions.map((transaction) => (
+          {transactions.length > 0 ? transactions.map((transaction) => (
             <View key={transaction.id} style={styles.transactionCard}>
               <View style={styles.transactionLeft}>
                 <View style={[
                   styles.transactionIconContainer,
-                  transaction.type === 'purchase' ? styles.purchaseIconBg : styles.paymentIconBg
+                  transaction.type === 'credit' ? styles.purchaseIconBg : styles.paymentIconBg
                 ]}>
                   <Ionicons 
-                    name={transaction.type === 'purchase' ? 'arrow-up' : 'arrow-down'} 
+                    name={transaction.type === 'credit' ? 'arrow-up' : 'arrow-down'} 
                     size={20} 
-                    color={transaction.type === 'purchase' ? '#DC2626' : '#059669'} 
+                    color={transaction.type === 'credit' ? '#DC2626' : '#059669'} 
                   />
                 </View>
                 <View style={styles.transactionDetails}>
-                  <Text style={styles.transactionTitle}>{transaction.title}</Text>
-                  <Text style={styles.transactionDate}>{transaction.date}</Text>
-                  <Text style={styles.transactionDescription}>{transaction.description}</Text>
+                  <Text style={styles.transactionTitle}>{transaction.type === 'credit' ? 'Credit taken' : 'Payment made'}</Text>
+                  <Text style={styles.transactionDate}>
+                    {transaction.createdAt ? new Date(transaction.createdAt.toMillis()).toLocaleDateString() : 'Just now'}
+                  </Text>
+                  {transaction.description ? <Text style={styles.transactionDescription}>{transaction.description}</Text> : null}
                 </View>
               </View>
               <Text style={[
                 styles.transactionAmount,
-                transaction.type === 'purchase' ? styles.purchaseAmount : styles.paymentAmount
+                transaction.type === 'credit' ? styles.purchaseAmount : styles.paymentAmount
               ]}>
-                {transaction.type === 'purchase' ? '+' : '-'}₹{transaction.amount.toLocaleString('en-IN')}
+                {transaction.type === 'credit' ? '+' : '-'}₹{(transaction.amount || 0).toLocaleString('en-IN')}
               </Text>
             </View>
-          ))}
+          )) : (
+            <View style={{ alignItems: 'center', marginTop: 50 }}>
+              <Ionicons name="receipt-outline" size={60} color="#ccc" />
+              <Text style={{ marginTop: 10, color: '#666', fontSize: 16 }}>No transactions found</Text>
+            </View>
+          )}
         </View>
       </ScrollView>
 
       {/* Footer */}
       <View style={styles.footer}>
         <View style={styles.balanceContainer}>
-          <Text style={styles.balanceLabel}>Current Balance</Text>
-          <Text style={styles.balanceAmount}>₹{currentBalance.toLocaleString('en-IN')}</Text>
+          <Text style={styles.balanceLabel}>Current Outstanding Balance</Text>
+          <Text style={styles.balanceAmount}>₹{(customer?.totalDue || 0).toLocaleString('en-IN')}</Text>
         </View>
       </View>
     </SafeAreaView>
