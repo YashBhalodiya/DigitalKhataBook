@@ -2,6 +2,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   increment,
   query,
@@ -76,6 +77,22 @@ export const customerService = {
       throw error;
     }
   },
+  getCustomerById: async (customerId) => {
+    try {
+      const customerRef = doc(db, "customers", customerId);
+      const customerDoc = await getDoc(customerRef);
+      if (customerDoc.exists()) {
+        return {
+          id: customerDoc.id,
+          ...customerDoc.data(),
+        };
+      } else {
+        throw new Error("Customer not found");
+      }
+    } catch (error) {
+      throw error;
+    }
+  },
   getCustomerCount: async (shopId) => {
     try {
       const customerRef = collection(db, "customers");
@@ -123,4 +140,41 @@ export const customerService = {
       throw error;
     }
   },
+  getTopCustomers: async (shopId) => {
+    try {
+      const q = query(
+        collection(db, "customers"),
+        where("shopId", "==", shopId),
+      );
+      const snapshot = await getDocs(q);
+      const customers = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.totalDue > 0) {
+          customers.push({
+            id: doc.id,
+            name: data.name,
+            totalDue: data.totalDue,
+          });
+        }
+      });
+      // Return top 5 sorted by highest due
+      return customers.sort((a, b) => b.totalDue - a.totalDue).slice(0, 5);
+    } catch (error) {
+      throw error;
+    }
+  },
+  getCustomerByUserId: async (userId) => {
+    try {
+      const q = query(collection(db, "customers"), where("userId", "==", userId));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const docSnap = querySnapshot.docs[0];
+        return { id: docSnap.id, ...docSnap.data() };
+      }
+      return null;
+    } catch (error) {
+      throw error;
+    }
+  }
 };
