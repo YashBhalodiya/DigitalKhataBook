@@ -40,8 +40,25 @@ export const transactionService = {
       const customerSnap = await getDoc(customerRef);
       const customerData = customerSnap.data();
 
-      if (customerData?.userId) {
-        const userSnap = await getDoc(doc(db, "users", customerData.userId));
+      let targetUserId = customerData?.userId;
+
+      // Unlinked edge case: search by phone number from the user collection
+      if (!targetUserId && customerData?.phone) {
+        const usersQuery = query(
+          collection(db, "users"),
+          where("phone", "==", customerData.phone)
+        );
+        const userQSnap = await getDocs(usersQuery);
+        if (!userQSnap.empty) {
+          targetUserId = userQSnap.docs[0].id;
+          
+          // Link it for future
+          await updateDoc(customerRef, { userId: targetUserId });
+        }
+      }
+
+      if (targetUserId) {
+        const userSnap = await getDoc(doc(db, "users", targetUserId));
         const userData = userSnap.data();
 
         if (userData?.expoPushToken) {
@@ -88,8 +105,25 @@ export const transactionService = {
       const customerSnap = await getDoc(customerRef);
       const customerData = customerSnap.data();
 
-      if (customerData?.userId) {
-        const userSnap = await getDoc(doc(db, "users", customerData.userId));
+      let targetUserId = customerData?.userId;
+
+      // Unlinked edge case: search by phone number from the user collection
+      if (!targetUserId && customerData?.phone) {
+        const usersQuery = query(
+          collection(db, "users"),
+          where("phone", "==", customerData.phone)
+        );
+        const userQSnap = await getDocs(usersQuery);
+        if (!userQSnap.empty) {
+          targetUserId = userQSnap.docs[0].id;
+          
+          // Link it for future
+          await updateDoc(customerRef, { userId: targetUserId });
+        }
+      }
+
+      if (targetUserId) {
+        const userSnap = await getDoc(doc(db, "users", targetUserId));
         const userData = userSnap.data();
 
         if (userData?.expoPushToken) {

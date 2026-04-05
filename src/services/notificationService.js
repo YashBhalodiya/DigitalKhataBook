@@ -229,19 +229,23 @@ export const notificationService = {
   // Register push token
   async registerPushToken(userId) {
     try {
-      if (IS_EXPO_GO) return; // won't work in Expo Go
-      if (!Device.isDevice) return;
+      if (!Device.isDevice) {
+        console.log("Not a physical device, push tokens might not work outside of emulators, but attempting anyway for local testing.");
+      }
 
-      const { status } = await Notifications.requestPermissionsAsync();
-      if (status !== "granted") return;
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
 
-      const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-      if (!projectId) {
-        console.warn(
-          "EAS projectId not configured. Run `eas init` to set it up.",
-        );
+      if (finalStatus !== "granted") {
+        console.log("Notification permissions not granted, cannot register push token");
         return;
       }
+
+      const projectId = Constants.expoConfig?.extra?.eas?.projectId || "4f625537-7b2d-4762-8a79-7fbe06f16d9f";
 
       const tokenData = await Notifications.getExpoPushTokenAsync({
         projectId,
@@ -254,7 +258,7 @@ export const notificationService = {
         expoPushToken: tokenData.data,
       });
 
-      console.log("Push token saved:", tokenData.data);
+      console.log("Push token saved for user:", userId, tokenData.data);
     } catch (error) {
       console.error("Error saving push token:", error);
     }
